@@ -1,0 +1,66 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+div#info {
+  height: 100%;
+  width: 200px;
+  background-color: #DDFFFF;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
+
+div#map {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0px;
+  left: 200px;
+}
+
+div.group {
+  padding: 4px;
+  margin: 10px;
+  background-color: #FFDDDD;
+}
+
+div.field {
+  padding: 2px;
+}
+
+input[type=text].latlng {
+  width: 12ex;
+  text-align: right;
+}
+
+label {
+  width: 20ex;
+  font-weight: bold;
+  padding: 0 1em 0 0;
+}
+
+canvas#workspace {
+  visibility: hidden;
+  z-index: 9999;
+  width: 640px;
+  height: 640px;
+  position: absolute;
+  top: 30px;
+  left: 30px;
+}
+
+div#url {
+  position: absolute;
+  top: 0px;
+  left: 30px;
+}
+
+img#loaded {
+  visibility: hidden;
+  position: absolute;
+  top: 30px;
+  left: 700px;
+}

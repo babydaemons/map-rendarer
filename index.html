@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Route Editor</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <script src="jquery.js" type="text/javascript"></script>
+  <script src="jquery_ujs.js" type="text/javascript"></script>
+  <link href="index.css" media="screen" rel="stylesheet" type="text/css" />
+</head>
+
+<body onContextmenu="return false;">
+<div id="info">
+  <div class="group">
+    <div>地図中心座標</div>
+    <div class="field">
+      <label for="lat0">緯度</label>
+      <input type="text" id="lat0" name="lat0" value="" class="latlng" readonly="readonly" />
+    </div>
+    <div class="field">
+      <label for="lng0">経度</label>
+      <input type="text" id="lng0" name="lng0" value="" class="latlng" readonly="readonly" />
+    </div>
+  </div>
+  <div class="group">
+    <div>北東(右上)端座標</div>
+    <div class="field">
+      <label for="lat1">緯度</label>
+      <input type="text" id="lat1" name="lat1" value="" class="latlng" readonly="readonly" />
+    </div>
+    <div class="field">
+      <label for="lng1">経度</label>
+      <input type="text" id="lng1" name="lng1" value="" class="latlng" readonly="readonly" />
+    </div>
+  </div>
+  <div class="group">
+    <div>南西(左下)端座標</div>
+    <div class="field">
+      <label for="lat2">緯度</label>
+      <input type="text" id="lat2" name="lat2" value="" class="latlng" readonly="readonly" />
+    </div>
+    <div class="field">
+      <label for="lng2">経度</label>
+      <input type="text" id="lng2" name="lng2" value="" class="latlng" readonly="readonly" />
+    </div>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<canvas id="workspace">
+HTML5のcanvasタグ対応のブラウザで参照してください。
+</canvas>
+
+<div id="url"></div>
+<img id="loaded" width="640" height="640" src="" />
+
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false&language=ja"></script>
+<script type="text/javascript" src="sprintf.js"></script>
+<script type="text/javascript" language="javascript">
+  var map;
+  var latLngNE, latLngSW;
+  var phase = 1;
+  var staticUrl = "http://maps.google.com/maps/api/staticmap?size=640x640&zoom=21&mobile=false&sensor=false&center=";
+
+  function initialize() {
+    var center = new google.maps.LatLng(35.700000, 137.000000);
+    var mapOptions = {
+      zoom: 5,
+      center: center,
+      mapTypeId: google.maps.MapTypeId.ROADMAP // SATELLITE
+    };
+
+    map = new google.maps.Map($("#map")[0], mapOptions);
+    google.maps.event.addListener(map, 'idle', update);
+    google.maps.event.addListener(map, 'rightclick', getPosition);
+
+    update();
+  }
+
+  function update(event) {
+    var positions = map.getCenter().toUrlValue().split(",");
+    $("#lat0").val("%.6f".sprintf(positions[0]));
+    $("#lng0").val("%.6f".sprintf(positions[1]));
+  }
+
+  function getPosition(event) {
+    if (phase > 2) return;
+    var positions = event.latLng.toUrlValue().split(",");
+    $("#lat" + phase).val("%.6f".sprintf(positions[0]));
+    $("#lng" + phase).val("%.6f".sprintf(positions[1]));
+    placeMarker(event.latLng, map);
+    if (phase == 2) drawBounds();
+    ++phase;
+  }
+
+  function drawBounds() {
+    var lat1 = $("#lat1").val();
+    var lng1 = $("#lng1").val();
+    var lat2 = $("#lat2").val();
+    var lng2 = $("#lng2").val();
+    if (lat1 < lat2) { var tmp = lat1; lat1 = lat2; lat2 = tmp; }
+    if (lng1 < lng2) { var tmp = lng1; lng1 = lng2; lng2 = tmp; }
+    latLngNE = new google.maps.LatLng(lat1, lng1);
+    latLngSW = new google.maps.LatLng(lat2, lng2);
+    var bounds = new google.maps.LatLngBounds(latLngSW, latLngNE);
+    var rectangleOptions = {
+      bounds: bounds,
+      strokeWeight: 1,
+      strokeColor: "#FF0000",
+      strokeOpacity: 0.5,
+      fillColor: "#FF0000",
+      fillOpacity: 0.1,
+      map: map
+    };
+    var rectangle = new google.maps.Rectangle(rectangleOptions);
+    scanTiles();
+  }
+
+  function placeMarker(position, map) {
+    var marker = new google.maps.Marker({
+      position: position,
+      map: map,
+      visible: true
+    });
+  }
+
+  function scanTiles() {
+    var projection = map.getProjection();
+    var lat0 = (latLngNE.lat() + latLngSW.lat()) / 2;
+    var lng0 = (latLngNE.lng() + latLngSW.lng()) / 2;
+    var latLng0 = new google.maps.LatLng(lat0, lng0);
+    var point0 = projection.fromLatLngToPoint(latLng0);
+
+    $("div#map").css("visibility", "hidden");
+    $("div#info").css("visibility", "hidden");
+    var canvas = $("canvas#workspace");
+    canvas.css("visibility", "visible");
+    var ctx = canvas[0].getContext('2d');
+    var img = $("img#loaded")[0];
+    var url = "staticmap.gif"; ///staticUrl + latLng0.lat() + "," + latLng0.lng();
+    $("div#url").text(url);
+    img.src = url;
+    img.onload = function() {
+      ctx.drawImage(img, 0, 0);
+    }
+
+    var img2 = new Image();
+    img2.onload = function(){
+      alert(img2.src);
+      location.href = img2.src;
+    };
+    img2.src = canvas[0].toDataURL("image/png");
+  }
+
+  $(function() {
+    $(window).resize(function() {
+      $("#map").width($("body").width() - $("#info").width());
+    });
+    $(window).resize();
+    initialize();
+  });
+</script>
+</body>
+</html>
+
