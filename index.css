@@ -45,14 +45,13 @@ label {
 canvas#workspace {
   visibility: hidden;
   z-index: 9999;
-  width: 640px;
-  height: 640px;
   position: absolute;
   top: 30px;
   left: 30px;
 }
 
 div#url {
+  visibility: hidden;
   position: absolute;
   top: 0px;
   left: 30px;

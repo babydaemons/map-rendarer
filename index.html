@@ -8,7 +8,7 @@
   <link href="index.css" media="screen" rel="stylesheet" type="text/css" />
 </head>
 
-<body onContextmenu="return false;">
+<body>
 <div id="info">
   <div class="group">
     <div>地図中心座標</div>
@@ -22,7 +22,7 @@
     </div>
   </div>
   <div class="group">
-    <div>北東(右上)端座標</div>
+    <div>境界座標1<input type="button" id="set1" value="設定" /></div>
     <div class="field">
       <label for="lat1">緯度</label>
       <input type="text" id="lat1" name="lat1" value="" class="latlng" readonly="readonly" />
@@ -33,7 +33,7 @@
     </div>
   </div>
   <div class="group">
-    <div>南西(左下)端座標</div>
+    <div>境界座標2<input type="button" id="set2" value="設定" /></div>
     <div class="field">
       <label for="lat2">緯度</label>
       <input type="text" id="lat2" name="lat2" value="" class="latlng" readonly="readonly" />
@@ -43,23 +43,25 @@
       <input type="text" id="lng2" name="lng2" value="" class="latlng" readonly="readonly" />
     </div>
   </div>
+  <div class="group">
+    <div>出力しますか?<input type="button" id="exec" value="OK" disabled="disabled" /></div>
+    <a href="" id="download" disabled="disabled">ダウンロード</a>
+  </div>
 </div>
 
 <div id="map"></div>
 
-<canvas id="workspace">
+<canvas id="workspace" width="6400" height="6400">
 HTML5のcanvasタグ対応のブラウザで参照してください。
 </canvas>
-
-<div id="url"></div>
-<img id="loaded" width="640" height="640" src="" />
 
 <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false&language=ja"></script>
 <script type="text/javascript" src="sprintf.js"></script>
 <script type="text/javascript" language="javascript">
   var map;
+  var marker = [];
   var latLngNE, latLngSW;
-  var phase = 1;
+  var target = -1;
   var staticUrl = "http://maps.google.com/maps/api/staticmap?size=640x640&zoom=21&mobile=false&sensor=false&center=";
 
   function initialize() {
@@ -72,7 +74,6 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
 
     map = new google.maps.Map($("#map")[0], mapOptions);
     google.maps.event.addListener(map, 'idle', update);
-    google.maps.event.addListener(map, 'rightclick', getPosition);
 
     update();
   }
@@ -84,16 +85,25 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
   }
 
   function getPosition(event) {
-    if (phase > 2) return;
+    if (target == -1) return;
     var positions = event.latLng.toUrlValue().split(",");
-    $("#lat" + phase).val("%.6f".sprintf(positions[0]));
-    $("#lng" + phase).val("%.6f".sprintf(positions[1]));
-    placeMarker(event.latLng, map);
-    if (phase == 2) drawBounds();
-    ++phase;
+    $("#lat" + target).val("%.6f".sprintf(positions[0]));
+    $("#lng" + target).val("%.6f".sprintf(positions[1]));
+    marker[target] = new google.maps.Marker({
+      position: event.latLng,
+      map: map,
+      visible: true
+    });
+    $("input[type=button]#set" + target).attr("disabled", false);
+    target = -1;
+
+    drawBounds();
   }
 
   function drawBounds() {
+    if (marker[1] === undefined) return;
+    if (marker[2] === undefined) return;
+
     var lat1 = $("#lat1").val();
     var lng1 = $("#lng1").val();
     var lat2 = $("#lat2").val();
@@ -113,15 +123,7 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
       map: map
     };
     var rectangle = new google.maps.Rectangle(rectangleOptions);
-    scanTiles();
-  }
-
-  function placeMarker(position, map) {
-    var marker = new google.maps.Marker({
-      position: position,
-      map: map,
-      visible: true
-    });
+    $("input[type=button]#exec").attr("disabled", false);
   }
 
   function scanTiles() {
@@ -135,27 +137,37 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     $("div#info").css("visibility", "hidden");
     var canvas = $("canvas#workspace");
     canvas.css("visibility", "visible");
-    var ctx = canvas[0].getContext('2d');
-    var img = $("img#loaded")[0];
-    var url = "staticmap.gif"; ///staticUrl + latLng0.lat() + "," + latLng0.lng();
-    $("div#url").text(url);
-    img.src = url;
+    var ctx = canvas[0].getContext("2d");
+    var img = new Image();
+    var url = staticUrl + latLng0.lat() + "," + latLng0.lng();
     img.onload = function() {
       ctx.drawImage(img, 0, 0);
     }
+    img.src = url;
 
     var img2 = new Image();
     img2.onload = function(){
       alert(img2.src);
-      location.href = img2.src;
     };
-    img2.src = canvas[0].toDataURL("image/png");
+    $("a#download").attr("href", canvas[0].toDataURL("image/png"));
+    $("a#download").attr("disabled", false);
   }
 
   $(function() {
     $(window).resize(function() {
       $("#map").width($("body").width() - $("#info").width());
     });
+
+    $("input[type=button]#set1,input[type=button]#set2").click(function() {
+      google.maps.event.addListener(map, "click", getPosition);
+      $(this).attr("disabled", true);
+      target = $(this).attr("id").replace(/set/, "");
+    });
+
+    $("input[type=button]#exec").click(function() {
+      scanTiles();
+    });
+
     $(window).resize();
     initialize();
   });
