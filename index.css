@@ -43,11 +43,11 @@ label {
 }
 
 canvas#workspace {
-  visibility: hidden;
+  display: none;
   z-index: 9999;
   position: absolute;
-  top: 30px;
-  left: 30px;
+  top: 0px;
+  left: 0px;
 }
 
 div#url {
