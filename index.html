@@ -191,6 +191,10 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     var canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
+    canvas.borderStyle = "fixed";
+    canvas.borderWidth = "4px";
+    canvas.borderColor = "#00FF00";
+
     var ctx = canvas.getContext("2d");
     ctx.drawImage($("canvas#workspace")[0], 0, 0, width, height, 0, 0, width, height);
     $("div#map").css("display", "none");
