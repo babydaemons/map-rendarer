@@ -67,7 +67,7 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
   var target = -1;
   var staticUrl = "http://maps.google.com/maps/api/staticmap?size=640x640&mobile=false&sensor=false";
   var WIDTH = 640, HEIGHT = 612;
-  var TOTAL, N, M, x0, y0;
+  var TOTAL, NX, NY, x0, y0;
   var width, height;
   var i = 0, j = 0, n = 0;
 
@@ -135,19 +135,19 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     var pointSW = projection.fromLatLngToDivPixel(latLngSW);
     width  = pointNE.x - pointSW.x;
     height = pointSW.y - pointNE.y;
-    N = Math.ceil(width / WIDTH);
-    M = Math.ceil(height / HEIGHT);
-    TOTAL = N * M;
+    NX = Math.ceil(width / WIDTH) + 1;
+    NY = Math.ceil(height / HEIGHT) + 1;
+    TOTAL = NX * NY;
 
-    alert(N + "個×" + M + "個の画像で作成します。"); 
+    alert(NX + "個×" + NY + "個の画像で作成します。"); 
     $("div#progress").html("0/" + TOTAL);
 
     var canvas = $("canvas#workspace");
     ctx = canvas[0].getContext("2d");
 
-    for (var i = 0; i < N; i++) {
+    for (var i = 0; i < NX; i++) {
       var img = [];
-      for (var j = 0; j < M; j++) {
+      for (var j = 0; j < NY; j++) {
         img[j] = new Image();
       }
       imgs[i] = img;
@@ -163,7 +163,7 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     var y = y0 + j * HEIGHT;
     putTile(ctx, imgs[i][j], projection, x, y);
 
-    if (++i >= N) { i = 0; ++j; }
+    if (++i >= NX) { i = 0; ++j; }
   }
 
   function putTile(ctx, img, projection, x, y) {
@@ -172,9 +172,15 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     img.onload = function() {
       var sx = 0, sy = 0, sw = WIDTH, sh = HEIGHT;
       var dx = Math.round(x - (WIDTH / 2)), dy = Math.round(y - (HEIGHT) / 2), dw = WIDTH, dh = HEIGHT;
-      ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+      //ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+      ctx.drawImage(img, dx, dy);
       $("div#progress").html(++n + "/" + TOTAL);
-      setTimeout((n < TOTAL) ? scanTiles : saveTiles, 1);
+      if (n < TOTAL) {
+        setTimeout(scanTiles, Math.floor(Math.random() * 10 * 1000));
+      }
+      else {
+        setTimeout(saveTiles, 1);
+      }
     }
     img.src = url;
   }
@@ -182,9 +188,14 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
   function saveTiles() {
     //var dataUrl = $("canvas#workspace")[0].toDataURL("image/png");
     //$("div#progress").html('<a href="' + dataUrl + '" target="_blank">ダウンロード</a>');
+    var canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage($("canvas#workspace")[0], 0, 0, width, height, 0, 0, width, height);
     $("div#map").css("display", "none");
     $("div#info").css("display", "none");
-    $("canvas#workspace").css("display", "inline");
+    $("body").append(canvas);
   }
 
   $(function() {
