@@ -50,13 +50,6 @@ canvas#workspace {
   left: 0px;
 }
 
-div#url {
-  visibility: hidden;
-  position: absolute;
-  top: 0px;
-  left: 30px;
-}
-
 img#loaded {
   visibility: hidden;
   position: absolute;
