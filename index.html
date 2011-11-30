@@ -170,7 +170,9 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     var latLng = projection.fromDivPixelToLatLng(new google.maps.Point(x, y));
     var url = staticUrl + "&zoom=" + map.getZoom() + "&center=" + latLng.lat() + "," + latLng.lng();
     img.onload = function() {
-      ctx.drawImage(img, Math.round(x - (WIDTH / 2)), Math.round(y - (HEIGHT) / 2));
+      var sx = 0, sy = 0, sw = WIDTH, sh = HEIGHT;
+      var dx = Math.round(x - (WIDTH / 2)), dy = Math.round(y - (HEIGHT) / 2), dw = WIDTH, dh = HEIGHT;
+      ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
       $("div#progress").html(++n + "/" + TOTAL);
       setTimeout((n < TOTAL) ? scanTiles : saveTiles, 1);
     }
