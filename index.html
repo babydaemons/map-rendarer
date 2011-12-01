@@ -22,7 +22,7 @@
     </div>
   </div>
   <div class="group">
-    <div>境界座標1<input type="button" id="set1" value="設定" /></div>
+    <div>境界座標1<input type="button" id="set1" class="cmd" value="設定" /></div>
     <div class="field">
       <label for="lat1">緯度</label>
       <input type="text" id="lat1" name="lat1" value="" class="latlng" readonly="readonly" />
@@ -33,7 +33,7 @@
     </div>
   </div>
   <div class="group">
-    <div>境界座標2<input type="button" id="set2" value="設定" /></div>
+    <div>境界座標2<input type="button" id="set2" class="cmd" value="設定" /></div>
     <div class="field">
       <label for="lat2">緯度</label>
       <input type="text" id="lat2" name="lat2" value="" class="latlng" readonly="readonly" />
@@ -44,14 +44,14 @@
     </div>
   </div>
   <div class="group">
-    <div>出力しますか?<input type="button" id="exec" value="OK" disabled="disabled" /></div>
+    <div>出力しますか?<input type="button" id="exec" class="cmd" value="OK" disabled="disabled" /></div>
     <div id="progress">&nbsp;</div>
   </div>
 </div>
 
 <div id="map"></div>
 
-<canvas id="workspace" width="6400" height="6400">
+<canvas id="result" width="20" height="20">
 HTML5のcanvasタグ対応のブラウザで参照してください。
 </canvas>
 
@@ -70,6 +70,7 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
   var TOTAL, NX, NY, x0, y0;
   var width, height;
   var i = 0, j = 0, n = 0;
+  var canvas0;
 
   function initialize() {
     var center = new google.maps.LatLng(35.700000, 137.000000);
@@ -135,15 +136,20 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     var pointSW = projection.fromLatLngToDivPixel(latLngSW);
     width  = pointNE.x - pointSW.x;
     height = pointSW.y - pointNE.y;
-    NX = Math.ceil(width / WIDTH) + 1;
-    NY = Math.ceil(height / HEIGHT) + 1;
+    NX = Math.ceil(width / WIDTH) + 2;
+    NY = Math.ceil(height / HEIGHT) + 2;
     TOTAL = NX * NY;
+    width = Math.floor(width);
+    height = Math.floor(height);
 
-    alert(NX + "個×" + NY + "個の画像で作成します。"); 
-    $("div#progress").html("0/" + TOTAL);
+    alert(NX + "個×" + NY + "個の画像で作成します：" + width + "px × " + height + "px"); 
+    $("div#progress").html("残り：0/" + TOTAL);
 
-    var canvas = $("canvas#workspace");
-    ctx = canvas[0].getContext("2d");
+    canvas0 = document.createElement("canvas");
+    canvas0.width = NX * WIDTH;
+    canvas0.height = NX * HEIGHT + 40;
+
+    ctx = canvas0.getContext("2d");
 
     for (var i = 0; i < NX; i++) {
       var img = [];
@@ -172,9 +178,9 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     img.onload = function() {
       var sx = 0, sy = 0, sw = WIDTH, sh = HEIGHT;
       var dx = Math.round(x - (WIDTH / 2)), dy = Math.round(y - (HEIGHT) / 2), dw = WIDTH, dh = HEIGHT;
-      //ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
-      ctx.drawImage(img, dx, dy);
-      $("div#progress").html(++n + "/" + TOTAL);
+      ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+      //ctx.drawImage(img, dx, dy);
+      $("div#progress").html("残り：" + ++n + "/" + TOTAL);
       if (n < TOTAL) {
         setTimeout(scanTiles, Math.floor(Math.random() * 10 * 1000));
       }
@@ -186,27 +192,27 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
   }
 
   function saveTiles() {
-    //var dataUrl = $("canvas#workspace")[0].toDataURL("image/png");
-    //$("div#progress").html('<a href="' + dataUrl + '" target="_blank">ダウンロード</a>');
-    var canvas = document.createElement('canvas');
+    var dataUrl = "";//$("canvas#result")[0].toDataURL("image/png");
+    var html1 = '<a href="' + dataUrl + '" target="_blank">ダウンロード</a>';
+    var html2 = '<a href="javascript:viewTiles();">表示</a>';
+    $("div#progress").html(html1 + "<br/>" + html2);
+  }
+
+  function viewTiles() {
+    var canvas = $("canvas#result")[0];
     canvas.width = width;
     canvas.height = height;
-    canvas.borderStyle = "fixed";
-    canvas.borderWidth = "4px";
-    canvas.borderColor = "#00FF00";
 
     var ctx = canvas.getContext("2d");
-    ctx.drawImage($("canvas#workspace")[0], 0, 0, width, height, 0, 0, width, height);
+    ctx.drawImage(canvas0, 0, 0, width, height, 0, 0, width, height);
     $("div#map").css("display", "none");
     $("div#info").css("display", "none");
-    $("body").append(canvas);
+    $("canvas#result").css("display", "inline");
   }
 
   $(function() {
     $(window).resize(function() {
       $("#map").width($("body").width() - $("#info").width());
-      //$("canvas#workspace").width($("body").width() - 20);
-      //$("canvas#workspace").height($("body").height() - 20);
     });
 
     $("input[type=button]#set1,input[type=button]#set2").click(function() {
