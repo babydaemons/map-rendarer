@@ -67,22 +67,6 @@ canvas#result {
   border-color: #0000FF;
 }
 
-div#background {
-  display: none;
-  z-index: 2000;
-  position: absolute;
-  top: 0px;
-  left: 0px;
-}
-
-div#border {
-  margin: 40px;
-  width: 100%;
-  height: 100%;
-  -webkit-border-radius: 20px;
-  -moz-border-radius: 20px;
-}
-
 img#loaded {
   visibility: hidden;
   position: absolute;
@@ -98,4 +82,9 @@ input[type=button].cmd {
 
 div#size ul {
   margin: -0.05em -0.85em;
+}
+
+div#dialog2 div#content {
+  margin: auto auto auto auto;
+  text-align: center;
 }

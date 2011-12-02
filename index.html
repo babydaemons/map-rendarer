@@ -63,9 +63,11 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
 <div id="dialog1" title="確認" style="display:none">
 </div>
 
-<div id="background">
-  <div id="border">
-  <div>
+<div id="dialog2" title="実行中．．．" style="display:none">
+  <div id="content">
+    <canvas id="thumbnail" width="640" height="480"></canvas>
+    <div class="progress"></div>
+  </div>
 </div>
 
 <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false&language=ja"></script>
@@ -145,17 +147,33 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     $("input[type=button]").attr("disabled", true);
 
     staticMaps = new StaticMaps(map, TILE_WIDTH, TILE_HEIGHT, LOGO_HEIGHT);
-    staticMaps.setProgressCallback(function(i, N) { $("div.progress").html("残り：" + i + "/" + N); });
-    staticMaps.setFinishedCallback(saveTiles);
     staticMaps.setBounds(marker[1].getProjection(), latLngSW, latLngNE);
+
+    var canvas = $("canvas#thumbnail")[0];
+    var zoomW = staticMaps.canvas.width / canvas.width;
+    var zoomH = staticMaps.canvas.height / canvas.height;
+    if (zoomW > zoomH) {
+      canvas.height = Math.floor(staticMaps.canvas.height / zoomW);
+    }
+    else {
+      canvas.width = Math.floor(staticMaps.canvas.width / zoomH);
+    }
+    var context = canvas.getContext("2d");
+    function updateProgress(i, N) {
+      $("div.progress").html("残り：" + i + "/" + N);
+      context.drawImage(staticMaps.canvas, 0, 0, staticMaps.canvas.width, staticMaps.canvas.height, 0, 0, canvas.width, canvas.height);
+    }
+    staticMaps.setProgressCallback(updateProgress);
+    staticMaps.setFinishedCallback(saveTiles);
 
     var tiles = staticMaps.ROWS + "個 × " + staticMaps.COLS + "個";
     var size = staticMaps.MAP_WIDTH + "px × " + staticMaps.MAP_HEIGHT + "px";
     size_info = "<ul><li>" + tiles + "</li><li>" + size + "</li></ul>";
-    $("div#dialog1").html(tiles + "の画像で作成します：" + size).dialog('open');
+    $("div#dialog1").html(tiles + "の画像で作成します：" + size).dialog("open");
   }
 
   function saveTiles() {
+    $("div#dialog2").dialog("close");
     $("div#group3").addClass("selected");
 
     var canvas = $("canvas#result")[0];
@@ -213,8 +231,22 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
         "Ok": function() {
           $(this).dialog("close");
           $("div#size").html(size_info);
+          $("div#dialog2").dialog("open");
           setTimeout(staticMaps.loadNext, 1);
         },
+        "Cancel": function() {
+          $(this).dialog("close");
+          location.href = "./";
+        }
+      }
+    });
+
+    $("div#dialog2").dialog({
+      autoOpen: false,
+      modal: true,
+      width: 700,
+      height: 560,
+      buttons: {
         "Cancel": function() {
           $(this).dialog("close");
           location.href = "./";

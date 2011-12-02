@@ -11,7 +11,7 @@ Array.prototype.shuffle = function() {
 }
 
 function StaticMaps(map, tileWidth, tileHeight, logoHeight) {
-  this.useGateway = false;
+  this.useGateway = true;
   this.map = map;
   this.canvas = document.createElement("canvas");
   this.context = this.canvas.getContext("2d");
@@ -22,14 +22,6 @@ function StaticMaps(map, tileWidth, tileHeight, logoHeight) {
   this.OFFSET_Y = Math.floor((tileHeight + logoHeight) / 2);
   this.lowerWait = 800;
   return this;
-}
-
-StaticMaps.prototype.setProgressCallback = function(func) {
-  this.progressCallback = func;
-}
-
-StaticMaps.prototype.setFinishedCallback = function(func) {
-  this.finishedCallback = func;
 }
 
 StaticMaps.prototype.setBounds = function(projection, latLngSW, latLngNE) {
@@ -47,8 +39,8 @@ StaticMaps.prototype.setBounds = function(projection, latLngSW, latLngNE) {
   this.COLS = Math.ceil(this.MAP_W / this.TILE_W) + 1;
   this.ROWS = Math.ceil(this.MAP_H / this.TILE_H) + 1;
   this.TILES = this.COLS * this.ROWS;
-  this.canvas.width  = this.COLS * this.MAP_WIDTH;
-  this.canvas.height = this.ROWS * this.MAP_HEIGHT;
+  this.canvas.width  = this.COLS * this.TILE_W;
+  this.canvas.height = this.ROWS * this.TILE_H + this.LOGO_H;
   //this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
   var w = this.TILE_W, h = this.TILE_H + this.LOGO_H;
   if (this.useGateway) {
@@ -66,13 +58,21 @@ StaticMaps.prototype.setBounds = function(projection, latLngSW, latLngNE) {
   }
 
   this.tiles = [];
-  for (var i = 0; i < this.ROWS; i++) {
-    for (var j = 0; j < this.COLS; j++) {
+  for (var j = 0; j < this.ROWS; j++) {
+    for (var i = 0; i < this.COLS; i++) {
       this.tiles.push(new StaticTile(maps, i, j));
     }
   }
   this.tiles.shuffle();
   this.index = 0;
+}
+
+StaticMaps.prototype.setProgressCallback = function(func) {
+  this.progressCallback = func;
+}
+
+StaticMaps.prototype.setFinishedCallback = function(func) {
+  this.finishedCallback = func;
 }
 
 StaticMaps.checkNext = function(maps) {
@@ -105,22 +105,27 @@ StaticMaps.prototype.saveCanvas = function(canvas) {
 
 function StaticTile(maps, i, j) {
   var img = new Image();
-  var dx = i * maps.TILE_W, dy = j * maps.TILE_H;
+  var dx = i * maps.TILE_W;
+  var dy = j * maps.TILE_H;
   img.onload = function() {
     maps.context.drawImage(img, 0, 0, maps.TILE_W, maps.TILE_H, dx, dy, maps.TILE_W, maps.TILE_H);
     StaticMaps.checkNext(maps);
   }
   this.img = img;
+  this.dx = dx;
+  this.dy = dy;
 
-  var x = maps.x0 + i * maps.TILE_W, y = maps.y0 + j * maps.TILE_H;
-  var latLng = maps.projection.fromDivPixelToLatLng(new google.maps.Point(x, y));
+  this.x = maps.x0 + i * maps.TILE_W;
+  this.y = maps.y0 + j * maps.TILE_H;
+  this.latLng = maps.projection.fromDivPixelToLatLng(new google.maps.Point(this.x, this.y));
   var params = maps.params.slice(0);
   params.push("zoom=" + maps.map.getZoom());
   params.push("maptype=" + maps.getMapType());
-  params.push("center=" + latLng.lat() + "," + latLng.lng());
+  params.push("center=" + this.latLng.lat() + "," + this.latLng.lng());
   params.shuffle();
   var url = maps.endpoint + "?" + params.join("&");
   this.load = function() {
     img.src = url;
   }
+  this.url = url;
 }
