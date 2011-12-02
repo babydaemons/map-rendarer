@@ -11,7 +11,7 @@ Array.prototype.shuffle = function() {
 }
 
 function StaticMaps(map, tileWidth, tileHeight, logoHeight) {
-  this.useGateway = true;
+  this.useGateway = false;
   this.map = map;
   this.canvas = document.createElement("canvas");
   this.context = this.canvas.getContext("2d");
@@ -20,6 +20,7 @@ function StaticMaps(map, tileWidth, tileHeight, logoHeight) {
   this.LOGO_H = logoHeight;
   this.OFFSET_X = Math.floor(tileWidth / 2);
   this.OFFSET_Y = Math.floor((tileHeight + logoHeight) / 2);
+  this.lowerWait = 800;
   return this;
 }
 
@@ -48,7 +49,7 @@ StaticMaps.prototype.setBounds = function(projection, latLngSW, latLngNE) {
   this.TILES = this.COLS * this.ROWS;
   this.canvas.width  = this.COLS * this.MAP_WIDTH;
   this.canvas.height = this.ROWS * this.MAP_HEIGHT;
-  this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+  //this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
   var w = this.TILE_W, h = this.TILE_H + this.LOGO_H;
   if (this.useGateway) {
     this.endpoint = location.href.replace(/[^\/]*$/, "") + "googlemapstatic.php";
@@ -77,7 +78,8 @@ StaticMaps.prototype.setBounds = function(projection, latLngSW, latLngNE) {
 StaticMaps.checkNext = function(maps) {
   maps.progressCallback(maps.index, maps.TILES);
   if (maps.index < maps.TILES) {
-    setTimeout(maps.loadNext, 800 + Math.floor(Math.random() * 5000));
+    setTimeout(maps.loadNext, maps.lowerWait + Math.floor(Math.random() * 5000));
+    maps.lowerWait += 50;
   }
   else {
     setTimeout(maps.finishedCallback, 1);

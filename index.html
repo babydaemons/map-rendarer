@@ -5,7 +5,10 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <script src="jquery.js" type="text/javascript"></script>
   <script src="jquery_ujs.js" type="text/javascript"></script>
-  <link href="index.css" media="screen" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
+  <script type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
+  <link type="text/css" href="css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />	
+  <link type="text/css" href="index.css" media="screen" rel="stylesheet" />
 </head>
 
 <body>
@@ -45,8 +48,8 @@
   </div>
   <div id="group3" class="group">
     <div id="title3" class="title">出力しますか?<input type="button" id="exec" class="cmd" value="OK" disabled="disabled" /></div>
-    <div id="result"></div>
-    <div id="progress"></div>
+    <div id="size"></div>
+    <div class="progress"></div>
   </div>
   <div>&nbsp;&nbsp;<a href="./">もう一度</a></div>
 </div>
@@ -56,6 +59,14 @@
 <canvas id="result" width="20" height="20">
 HTML5のcanvasタグ対応のブラウザで参照してください。
 </canvas>
+
+<div id="dialog" title="確認" style="display:none">
+</div>
+
+<div id="background">
+  <div id="border">
+  <div>
+</div>
 
 <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false&language=ja"></script>
 <script type="text/javascript" src="sprintf.js"></script>
@@ -133,15 +144,14 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     $("input[type=button]").attr("disabled", true);
 
     staticMaps = new StaticMaps(map, TILE_WIDTH, TILE_HEIGHT, LOGO_HEIGHT);
-    staticMaps.setProgressCallback(function(i, N) { $("div#progress").html("残り：" + i + "/" + N); });
+    staticMaps.setProgressCallback(function(i, N) { $("div.progress").html("残り：" + i + "/" + N); });
     staticMaps.setFinishedCallback(saveTiles);
     staticMaps.setBounds(marker[1].getProjection(), latLngSW, latLngNE);
 
     var tiles = staticMaps.ROWS + "個 × " + staticMaps.COLS + "個";
     var size = staticMaps.MAP_WIDTH + "px × " + staticMaps.MAP_HEIGHT + "px";
-    alert(tiles + "の画像で作成します：" + size);
-    $("div#result").html("<ul><li>" + tiles + "</li><li>" + size + "</li></ul>");
-    setTimeout(staticMaps.loadNext, 1);
+    $("div#dialog").html(tiles + "の画像で作成します：" + size).dialog('open');
+    $("div#size").html("<ul><li>" + tiles + "</li><li>" + size + "</li></ul>");
   }
 
   function saveTiles() {
@@ -181,6 +191,7 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
   $(function() {
     $(window).resize(function() {
       $("#map").width($("body").width() - $("#info").width());
+      $("#background").width($("body").width()).height($("body").height());
     });
 
     $("input[type=button]#set1,input[type=button]#set2").click(function() {
@@ -192,6 +203,21 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     });
 
     $("input[type=button]#exec").click(initTiles);
+
+    $("div#dialog").dialog({
+      autoOpen: false,
+      modal: true,
+      width: 400,
+			buttons: {
+				"Ok": function() {
+					$(this).dialog("close");
+          setTimeout(staticMaps.loadNext, 1);
+				},
+				"Cancel": function() {
+					$(this).dialog("close");
+				}
+			}
+    });
 
     $(window).resize();
     initialize();
