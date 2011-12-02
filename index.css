@@ -24,19 +24,19 @@ div#map {
 div.group {
   padding: 3px;
   margin: 6px;
-  background-color: #FFDDDD;
+  background-color: #DDDDFF;
   border-style: solid;
-  border-color: #FFCCCC;
+  border-color: #CCCCFF;
   border-width: 2px;
 }
 
 div.title {
   font-weight: bold;
-  color: #0000AA;
 }
 
 div.selected {
-  font-weight: bold;
+  background-color: #FFDDDD;
+  border-color: #FFCCCC;
 }
 
 div.field {
@@ -55,7 +55,6 @@ input[type=text].latlng {
 }
 
 label {
-  font-weight: bold;
   padding: 0px 1em 0px 0px;
 }
 

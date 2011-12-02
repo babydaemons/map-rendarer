@@ -11,12 +11,15 @@ Array.prototype.shuffle = function() {
 }
 
 function StaticMaps(map, tileWidth, tileHeight, logoHeight) {
+  this.useGateway = true;
   this.map = map;
   this.canvas = document.createElement("canvas");
   this.context = this.canvas.getContext("2d");
   this.TILE_W = tileWidth;
   this.TILE_H = tileHeight;
   this.LOGO_H = logoHeight;
+  this.OFFSET_X = Math.floor(tileWidth / 2);
+  this.OFFSET_Y = Math.floor((tileHeight + logoHeight) / 2);
   return this;
 }
 
@@ -34,18 +37,25 @@ StaticMaps.prototype.setBounds = function(projection, latLngSW, latLngNE) {
   this.latLngNE = latLngNE;
   this.pointSW = projection.fromLatLngToDivPixel(latLngSW);
   this.pointNE = projection.fromLatLngToDivPixel(latLngNE);
+  this.x0 = this.pointSW.x;
+  this.y0 = this.pointNE.y;
   this.MAP_W = this.pointNE.x - this.pointSW.x;
   this.MAP_H = this.pointSW.y - this.pointNE.y;
   this.MAP_WIDTH = Math.floor(this.MAP_W);
   this.MAP_HEIGHT = Math.floor(this.MAP_H);
-  this.COLS = Math.ceil(this.MAP_W / this.TILE_W);
-  this.ROWS = Math.ceil(this.MAP_H / this.TILE_H);
+  this.COLS = Math.ceil(this.MAP_W / this.TILE_W) + 1;
+  this.ROWS = Math.ceil(this.MAP_H / this.TILE_H) + 1;
   this.TILES = this.COLS * this.ROWS;
   this.canvas.width  = this.COLS * this.MAP_WIDTH;
   this.canvas.height = this.ROWS * this.MAP_HEIGHT;
+  this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
   var w = this.TILE_W, h = this.TILE_H + this.LOGO_H;
-  //this.endpoint = location.href.replace(/[^\/]*$/, "") + "googlemapstatic.php";
-  this.endpoint = "http://maps.google.com/maps/api/staticmap";
+  if (this.useGateway) {
+    this.endpoint = location.href.replace(/[^\/]*$/, "") + "googlemapstatic.php";
+  }
+  else {
+    this.endpoint = "http://maps.google.com/maps/api/staticmap";
+  }
   this.params = [ "mobile=false", "sensor=false", "size=" + w + "x" + h ];
 
   var maps = this;
@@ -67,7 +77,7 @@ StaticMaps.prototype.setBounds = function(projection, latLngSW, latLngNE) {
 StaticMaps.checkNext = function(maps) {
   maps.progressCallback(maps.index, maps.TILES);
   if (maps.index < maps.TILES) {
-    setTimeout(maps.loadNext, 500 + Math.floor(Math.random() * 3000));
+    setTimeout(maps.loadNext, 800 + Math.floor(Math.random() * 5000));
   }
   else {
     setTimeout(maps.finishedCallback, 1);
@@ -83,6 +93,14 @@ StaticMaps.prototype.getMapType = function() {
   return "roadmap";
 }
 
+StaticMaps.prototype.saveCanvas = function(canvas) {
+  canvas.width = this.MAP_WIDTH;
+  canvas.height = this.MAP_HEIGHT;
+
+  var context = canvas.getContext("2d");
+  context.drawImage(this.canvas, this.OFFSET_X, this.OFFSET_Y, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+}
+
 function StaticTile(maps, i, j) {
   var img = new Image();
   var dx = i * maps.TILE_W, dy = j * maps.TILE_H;
@@ -92,7 +110,7 @@ function StaticTile(maps, i, j) {
   }
   this.img = img;
 
-  var x = maps.pointSW.x + i * maps.TILE_W, y = maps.pointNE.y + j * maps.TILE_H;
+  var x = maps.x0 + i * maps.TILE_W, y = maps.y0 + j * maps.TILE_H;
   var latLng = maps.projection.fromDivPixelToLatLng(new google.maps.Point(x, y));
   var params = maps.params.slice(0);
   params.push("zoom=" + maps.map.getZoom());
