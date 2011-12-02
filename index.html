@@ -7,7 +7,7 @@
   <script src="jquery_ujs.js" type="text/javascript"></script>
   <script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
   <script type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
-  <link type="text/css" href="css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />	
+  <link type="text/css" href="css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" /> 
   <link type="text/css" href="index.css" media="screen" rel="stylesheet" />
 </head>
 
@@ -60,7 +60,7 @@
 HTML5のcanvasタグ対応のブラウザで参照してください。
 </canvas>
 
-<div id="dialog" title="確認" style="display:none">
+<div id="dialog1" title="確認" style="display:none">
 </div>
 
 <div id="background">
@@ -79,6 +79,7 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
   var latLngNE, latLngSW;
   var target = -1;
   var TILE_WIDTH = 640, TILE_HEIGHT = 612, LOGO_HEIGHT = TILE_WIDTH - TILE_HEIGHT;
+  var size_info;
 
   function initialize() {
     var center = new google.maps.LatLng(35.700000, 137.000000);
@@ -150,8 +151,8 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
 
     var tiles = staticMaps.ROWS + "個 × " + staticMaps.COLS + "個";
     var size = staticMaps.MAP_WIDTH + "px × " + staticMaps.MAP_HEIGHT + "px";
-    $("div#dialog").html(tiles + "の画像で作成します：" + size).dialog('open');
-    $("div#size").html("<ul><li>" + tiles + "</li><li>" + size + "</li></ul>");
+    size_info = "<ul><li>" + tiles + "</li><li>" + size + "</li></ul>";
+    $("div#dialog1").html(tiles + "の画像で作成します：" + size).dialog('open');
   }
 
   function saveTiles() {
@@ -164,10 +165,10 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     if (staticMaps.useGateway) {
       var dataUrl = canvas.toDataURL("image/png");
       var html1 = '<a href="' + dataUrl + '" target="_blank">ダウンロード</a>';
-      $("div#progress").html(html1 + "&nbsp;" + html2);
+      $("div.progress").html(html1 + "&nbsp;" + html2);
     }
     else {
-      $("div#progress").html(html2);
+      $("div.progress").html(html2);
     }
 
   }
@@ -204,19 +205,21 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
 
     $("input[type=button]#exec").click(initTiles);
 
-    $("div#dialog").dialog({
+    $("div#dialog1").dialog({
       autoOpen: false,
       modal: true,
       width: 400,
-			buttons: {
-				"Ok": function() {
-					$(this).dialog("close");
+      buttons: {
+        "Ok": function() {
+          $(this).dialog("close");
+          $("div#size").html(size_info);
           setTimeout(staticMaps.loadNext, 1);
-				},
-				"Cancel": function() {
-					$(this).dialog("close");
-				}
-			}
+        },
+        "Cancel": function() {
+          $(this).dialog("close");
+          location.href = "./";
+        }
+      }
     });
 
     $(window).resize();
