@@ -30,13 +30,22 @@ div.group {
   border-width: 2px;
 }
 
+div.title {
+  font-weight: bold;
+  color: #0000AA;
+}
+
+div.selected {
+  font-weight: bold;
+}
+
 div.field {
   padding: 2px;
 }
 
 div#progress {
   width: 100%;
-  height: 2.8em;
+  /* height: 2.8em; */
 }
 
 input[type=text].latlng {
@@ -71,4 +80,8 @@ input[type=button].cmd {
   position: relative;
   top: -2px;
   left: 4px;
+}
+
+div#result ul {
+  margin: -0.05em -0.85em;
 }

@@ -11,7 +11,7 @@
 <body>
 <div id="info">
   <div class="group">
-    <div>地図中心座標</div>
+    <div id="title0" class="title">地図中心座標</div>
     <div class="field">
       <label for="lat0">緯度</label>
       <input type="text" id="lat0" name="lat0" value="" class="latlng" readonly="readonly" />
@@ -22,7 +22,7 @@
     </div>
   </div>
   <div class="group">
-    <div>境界座標1<input type="button" id="set1" class="cmd" value="設定" /></div>
+    <div id="title1" class="title">境界座標1<input type="button" id="set1" class="cmd" value="設定" /></div>
     <div class="field">
       <label for="lat1">緯度</label>
       <input type="text" id="lat1" name="lat1" value="" class="latlng" readonly="readonly" />
@@ -33,7 +33,7 @@
     </div>
   </div>
   <div class="group">
-    <div>境界座標2<input type="button" id="set2" class="cmd" value="設定" /></div>
+    <div id="title2" class="title">境界座標2<input type="button" id="set2" class="cmd" value="設定" /></div>
     <div class="field">
       <label for="lat2">緯度</label>
       <input type="text" id="lat2" name="lat2" value="" class="latlng" readonly="readonly" />
@@ -44,8 +44,9 @@
     </div>
   </div>
   <div class="group">
-    <div>出力しますか?<input type="button" id="exec" class="cmd" value="OK" disabled="disabled" /></div>
-    <div id="progress">&nbsp;</div>
+    <div id="title3" class="title">出力しますか?<input type="button" id="exec" class="cmd" value="OK" disabled="disabled" /></div>
+    <div id="result"></div>
+    <div id="progress"></div>
   </div>
 </div>
 
@@ -58,19 +59,14 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
 <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false&language=ja"></script>
 <script type="text/javascript" src="sprintf.js"></script>
 <script type="text/javascript" src="boundsmarker.js"></script>
+<script type="text/javascript" src="staticmaps.js"></script>
 <script type="text/javascript" language="javascript">
   var map;
+  var staticMaps;
   var marker = [];
-  var imgs = [];
-  var projection, ctx;
   var latLngNE, latLngSW;
   var target = -1;
-  var staticUrl = "http://maps.google.com/maps/api/staticmap?size=640x640&mobile=false&sensor=false";
-  var WIDTH = 640, HEIGHT = 612;
-  var TOTAL, NX, NY, x0, y0;
-  var width, height;
-  var i = 0, j = 0, n = 0;
-  var canvas0;
+  var TILE_WIDTH = 640, TILE_HEIGHT = 612, LOGO_HEIGHT = TILE_WIDTH - TILE_HEIGHT;
 
   function initialize() {
     var center = new google.maps.LatLng(35.700000, 137.000000);
@@ -94,11 +90,13 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
 
   function getPosition(event) {
     if (target == -1) return;
+    $("input[type=button]").attr("disabled", false);
+    $("div#title" + target).removeClass("selected");
+
     var positions = event.latLng.toUrlValue().split(",");
     $("#lat" + target).val("%.6f".sprintf(positions[0]));
     $("#lng" + target).val("%.6f".sprintf(positions[1]));
     marker[target] = new BoundsMarker(map, event.latLng);
-    $("input[type=button]#set" + target).attr("disabled", false);
     target = -1;
 
     drawBounds();
@@ -131,80 +129,35 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
   }
 
   function initTiles() {
-    projection = marker[1].getProjection();
-    var pointNE = projection.fromLatLngToDivPixel(latLngNE);
-    var pointSW = projection.fromLatLngToDivPixel(latLngSW);
-    width  = pointNE.x - pointSW.x;
-    height = pointSW.y - pointNE.y;
-    NX = Math.ceil(width / WIDTH) + 2;
-    NY = Math.ceil(height / HEIGHT) + 2;
-    TOTAL = NX * NY;
-    width = Math.floor(width);
-    height = Math.floor(height);
+    $("input[type=button]").attr("disabled", true);
 
-    alert(NX + "個×" + NY + "個の画像で作成します：" + width + "px × " + height + "px"); 
-    $("div#progress").html("残り：0/" + TOTAL);
+    staticMaps = new StaticMaps(map, TILE_WIDTH, TILE_HEIGHT, LOGO_HEIGHT);
+    staticMaps.setProgressCallback(function(i, N) { $("div#progress").html("残り：" + i + "/" + N); });
+    staticMaps.setFinishedCallback(saveTiles);
+    staticMaps.setBounds(marker[1].getProjection(), latLngSW, latLngNE);
 
-    canvas0 = document.createElement("canvas");
-    canvas0.width = NX * WIDTH;
-    canvas0.height = NX * HEIGHT + 40;
-
-    ctx = canvas0.getContext("2d");
-
-    for (var i = 0; i < NX; i++) {
-      var img = [];
-      for (var j = 0; j < NY; j++) {
-        img[j] = new Image();
-      }
-      imgs[i] = img;
-    }
-
-    x0 = pointSW.x;
-    y0 = pointNE.y;
-    setTimeout(scanTiles, 1);
-  }
-
-  function scanTiles() {
-    var x = x0 + i * WIDTH;
-    var y = y0 + j * HEIGHT;
-    putTile(ctx, imgs[i][j], projection, x, y);
-
-    if (++i >= NX) { i = 0; ++j; }
-  }
-
-  function putTile(ctx, img, projection, x, y) {
-    var latLng = projection.fromDivPixelToLatLng(new google.maps.Point(x, y));
-    var url = staticUrl + "&zoom=" + map.getZoom() + "&center=" + latLng.lat() + "," + latLng.lng();
-    img.onload = function() {
-      var sx = 0, sy = 0, sw = WIDTH, sh = HEIGHT;
-      var dx = Math.round(x - (WIDTH / 2)), dy = Math.round(y - (HEIGHT) / 2), dw = WIDTH, dh = HEIGHT;
-      ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
-      //ctx.drawImage(img, dx, dy);
-      $("div#progress").html("残り：" + ++n + "/" + TOTAL);
-      if (n < TOTAL) {
-        setTimeout(scanTiles, Math.floor(Math.random() * 10 * 1000));
-      }
-      else {
-        setTimeout(saveTiles, 1);
-      }
-    }
-    img.src = url;
+    var tiles = staticMaps.ROWS + "個 × " + staticMaps.COLS + "個";
+    var size = staticMaps.MAP_WIDTH + "px × " + staticMaps.MAP_HEIGHT + "px";
+    alert(tiles + "の画像で作成します：" + size);
+    $("div#result").html("<ul><li>" + tiles + "</li><li>" + size + "</li></ul>");
+    setTimeout(staticMaps.loadNext, 1);
   }
 
   function saveTiles() {
-    var dataUrl = "";//$("canvas#result")[0].toDataURL("image/png");
+    var canvas = $("canvas#result")[0];
+    canvas.width = staticMaps.MAP_WIDTH;
+    canvas.height = staticMaps.MAP_HEIGHT;
+
+    var context = canvas.getContext("2d");
+    context.drawImage(staticMaps.canvas, 0, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+
+    var dataUrl = "";//canvas.toDataURL("image/png");
     var html1 = '<a href="' + dataUrl + '" target="_blank">ダウンロード</a>';
     var html2 = '<a href="javascript:viewTiles();">表示</a>';
-    $("div#progress").html(html1 + "<br/>" + html2);
+    $("div#progress").html(html1 + "&nbsp;" + html2);
   }
 
   function viewTiles() {
-    var canvas = $("canvas#result")[0];
-    canvas.width = width;
-    canvas.height = height;
-
-    var ctx = canvas.getContext("2d");
-    ctx.drawImage(canvas0, 0, 0, width, height, 0, 0, width, height);
     $("div#map").css("display", "none");
     $("div#info").css("display", "none");
     $("canvas#result").css("display", "inline");
@@ -217,13 +170,13 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
 
     $("input[type=button]#set1,input[type=button]#set2").click(function() {
       google.maps.event.addListener(map, "click", getPosition);
-      $(this).attr("disabled", true);
       target = $(this).attr("id").replace(/set/, "");
+      $(this).attr("disabled", true);
+      $("input[type=button]").attr("disabled", true);
+      $("div#title" + target).addClass("selected");
     });
 
-    $("input[type=button]#exec").click(function() {
-      initTiles();
-    });
+    $("input[type=button]#exec").click(initTiles);
 
     $(window).resize();
     initialize();
@@ -231,4 +184,3 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
 </script>
 </body>
 </html>
-

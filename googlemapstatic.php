@@ -16,9 +16,15 @@ $baseUrl = "http://maps.google.com/maps/api/staticmap?";
 $url = $baseUrl . $_SERVER['QUERY_STRING'];
 
 $userAgent = $userAgents[mt_rand(0, count($userAgents) - 1)];
-ini_set('user_agent', $userAgent);
-
-$handle = fopen($url, "rb");
+$opts = array(
+  'http' => array(
+    'method' => "GET",
+    'header' => "Accept-Language: " . $_SERVER['HTTP_ACCEPT_LANGUAGE'] . "\r\n" .
+                "User-Agent: " . $userAgent . "\r\n"
+  )
+);
+$context = stream_context_create($opts);
+$handle = fopen($url, "rb", false, $context);
 $contents = stream_get_contents($handle);
 
 $wanted = "Content-Type: ";
