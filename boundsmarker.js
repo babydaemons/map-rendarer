@@ -1,5 +1,6 @@
-function BoundsMarker(map, latLng) {
+function BoundsMarker(map, latLng, id) {
   this._latLng = latLng;
+  this._id = id;
   this.setMap(map);
 }
 BoundsMarker.prototype = new google.maps.OverlayView();
@@ -13,6 +14,7 @@ BoundsMarker.prototype.draw = function() {
     this._div.style.width = "8px";
     this._div.style.height = "8px";
     this._div.style.backgroundColor = "#FF0000";
+    this._div.id = this._id;
     // 要素を追加する子を取得
     var panes = this.getPanes();
     // 要素追加
@@ -32,4 +34,12 @@ BoundsMarker.prototype.remove = function() {
     this._div.parentNode.removeChild(this._div);
     this._div = null;
   }
+}
+
+/* 現在座標で位置を設定する。受け取った座標はfromLatLngToDivPixelでPixelに変換してDivのスタイルに設定。 */
+BoundsMarker.prototype.setPosition = function(latLng) {
+  this._latLng = latLng;
+  var point = this.getProjection().fromLatLngToDivPixel(latLng);
+  this._div.style.left = (point.x - 4) + 'px';
+  this._div.style.top = (point.y - 4) + 'px';
 }

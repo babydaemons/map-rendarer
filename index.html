@@ -78,6 +78,7 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
   var map;
   var staticMaps;
   var marker = [];
+  var rectangle = null;
   var latLngNE, latLngSW;
   var target = -1;
   var TILE_WIDTH = 640, TILE_HEIGHT = 612, LOGO_HEIGHT = TILE_WIDTH - TILE_HEIGHT;
@@ -111,7 +112,13 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     var positions = event.latLng.toUrlValue().split(",");
     $("#lat" + target).val("%.6f".sprintf(positions[0]));
     $("#lng" + target).val("%.6f".sprintf(positions[1]));
-    marker[target] = new BoundsMarker(map, event.latLng);
+    if (marker[target] === undefined) {
+      marker[target] = new BoundsMarker(map, event.latLng, "marker" + target);
+      google.maps.event.addListener(marker[target], "dragged", getPosition);
+    }
+    else {
+      marker[target].setPosition(event.latLng);
+    }
     target = -1;
 
     drawBounds();
@@ -130,16 +137,21 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     latLngNE = new google.maps.LatLng(lat1, lng1);
     latLngSW = new google.maps.LatLng(lat2, lng2);
     var bounds = new google.maps.LatLngBounds(latLngSW, latLngNE);
-    var rectangleOptions = {
-      bounds: bounds,
-      strokeWeight: 1,
-      strokeColor: "#FF0000",
-      strokeOpacity: 0.5,
-      fillColor: "#FF0000",
-      fillOpacity: 0.1,
-      map: map
-    };
-    var rectangle = new google.maps.Rectangle(rectangleOptions);
+    if (rectangle === null) {
+      var rectangleOptions = {
+        bounds: bounds,
+        strokeWeight: 1,
+        strokeColor: "#FF0000",
+        strokeOpacity: 0.5,
+        fillColor: "#FF0000",
+        fillOpacity: 0.1,
+        map: map
+      };
+      rectangle = new google.maps.Rectangle(rectangleOptions);
+    }
+    else {
+      rectangle.setBounds(bounds);
+    }
     $("input[type=button]#exec").attr("disabled", false);
   }
 
