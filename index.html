@@ -176,12 +176,14 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     $("div#dialog2").dialog("close");
     $("div#group3").addClass("selected");
 
+    $("canvas#thumbnail").attr("width", 0).attr("height", 0);
+
     var canvas = $("canvas#result")[0];
-    staticMaps.saveCanvas(canvas);
+    var contentType = staticMaps.saveCanvas(canvas);
 
     var html2 = '<a href="javascript:viewTiles();">表示</a>';
     if (staticMaps.useGateway) {
-      var dataUrl = canvas.toDataURL("image/png");
+      var dataUrl = canvas.toDataURL(contentType);
       var html1 = '<a href="' + dataUrl + '" target="_blank">ダウンロード</a>';
       $("div.progress").html(html1 + "&nbsp;" + html2);
     }

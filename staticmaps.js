@@ -101,6 +101,17 @@ StaticMaps.prototype.saveCanvas = function(canvas) {
 
   var context = canvas.getContext("2d");
   context.drawImage(this.canvas, this.OFFSET_X, this.OFFSET_Y, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+
+  this.canvas.width = 0;
+  this.canvas.height = 0;
+  this.canvas = null;
+
+  var mapTypeId = this.map.getMapTypeId();
+  if (mapTypeId == google.maps.MapTypeId.ROADMAP)   return "image/png";
+  if (mapTypeId == google.maps.MapTypeId.HYBRID)    return "image/jpeg";
+  if (mapTypeId == google.maps.MapTypeId.SATELLITE) return "image/jpeg";
+  if (mapTypeId == google.maps.MapTypeId.TERRAIN)   return "image/png";
+  return "imgage/png";
 }
 
 function StaticTile(maps, i, j) {
