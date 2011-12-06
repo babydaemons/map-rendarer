@@ -1,4 +1,4 @@
-function BoundsMarker(map, latLng, id) {
+function BoundsMarker(map, latLng) {
   this._latLng = latLng;
   this.setMap(map);
 }

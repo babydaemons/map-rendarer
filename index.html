@@ -65,7 +65,7 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
 
 <div id="dialog2" title="実行中．．．" style="display:none">
   <div id="content">
-    <canvas id="thumbnail" width="640" height="480"></canvas>
+    <canvas id="thumbnail" width="600" height="320"></canvas>
     <div class="progress"></div>
   </div>
 </div>
@@ -244,8 +244,8 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     $("div#dialog2").dialog({
       autoOpen: false,
       modal: true,
-      width: 700,
-      height: 560,
+      width: 640,
+      height: 480,
       buttons: {
         "Cancel": function() {
           $(this).dialog("close");
