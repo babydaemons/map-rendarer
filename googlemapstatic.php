@@ -1,4 +1,6 @@
 <?php
+require_once 'HTTP.php';
+
 $userAgents = array(
   // Chrome
   "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.121 Safari/535.2",
@@ -24,7 +26,17 @@ $opts = array(
   )
 );
 $context = stream_context_create($opts);
-$handle = fopen($url, "rb", false, $context);
+
+$waits = 1;
+for ($i = 0; !($handle = fopen($url, "rb", false, $context) && $i < 7; $i++) {
+  sleep($waits);
+  $waits *= 2;
+}
+
+if (!$handle) {
+  HTTP::redirect("error.png");
+}
+
 $contents = stream_get_contents($handle);
 
 $wanted = "Content-Type: ";
