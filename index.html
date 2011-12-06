@@ -49,7 +49,7 @@
   <div id="group3" class="group">
     <div id="title3" class="title">出力しますか?<input type="button" id="exec" class="cmd" value="OK" disabled="disabled" /></div>
     <div id="size"></div>
-    <div class="progress"></div>
+    <div id="progress"></div>
   </div>
   <div>&nbsp;&nbsp;<a href="./">もう一度</a></div>
 </div>
@@ -65,8 +65,7 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
 
 <div id="dialog2" title="実行中．．．" style="display:none">
   <div id="content">
-    <canvas id="thumbnail" width="600" height="320"></canvas>
-    <div class="progress"></div>
+    <canvas id="thumbnail" width="600" height="340"></canvas>
   </div>
 </div>
 
@@ -82,7 +81,7 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
   var latLngNE, latLngSW;
   var target = -1;
   var TILE_WIDTH = 640, TILE_HEIGHT = 612, LOGO_HEIGHT = TILE_WIDTH - TILE_HEIGHT;
-  var size_info;
+  var THUMBNAIL_WIDTH = $("canvas#thumbnail").attr("width"), THUMBNAIL_HEIGHT = $("canvas#thumbnail").attr("height");
 
   function initialize() {
     var center = new google.maps.LatLng(35.700000, 137.000000);
@@ -95,13 +94,27 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     map = new google.maps.Map($("#map")[0], mapOptions);
     google.maps.event.addListener(map, 'idle', update);
 
+    staticMaps = new StaticMaps(map, TILE_WIDTH, TILE_HEIGHT, LOGO_HEIGHT);
     update();
   }
 
-  function update(event) {
+  function update() {
     var positions = map.getCenter().toUrlValue().split(",");
     $("#lat0").val("%.6f".sprintf(positions[0]));
     $("#lng0").val("%.6f".sprintf(positions[1]));
+    updateBounds(false);
+  }
+
+  function updateBounds(execute) {
+    if (marker[1] === undefined) return;
+    if (marker[2] === undefined) return;
+
+    staticMaps.setBounds(marker[1].getProjection(), latLngSW, latLngNE);
+    var tiles = staticMaps.ROWS + "個 × " + staticMaps.COLS + "個";
+    var size = staticMaps.MAP_WIDTH + "px × " + staticMaps.MAP_HEIGHT + "px";
+    var size_info = "<ul><li>" + tiles + "</li><li>" + size + "</li></ul>";
+    $("div#size").html(size_info);
+    if (execute) $("div#dialog1").html(tiles + "の画像で作成します：" + size).dialog("open");
   }
 
   function getPosition(event) {
@@ -113,8 +126,8 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     $("#lat" + target).val("%.6f".sprintf(positions[0]));
     $("#lng" + target).val("%.6f".sprintf(positions[1]));
     if (marker[target] === undefined) {
-      marker[target] = new BoundsMarker(map, event.latLng, "marker" + target);
-      google.maps.event.addListener(marker[target], "dragged", getPosition);
+      function setTarget(t) { target = t; }
+      marker[target] = new BoundsMarker(map, event.latLng, target, setTarget, getPosition);
     }
     else {
       marker[target].setPosition(event.latLng);
@@ -152,14 +165,12 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     else {
       rectangle.setBounds(bounds);
     }
+    updateBounds(false);
     $("input[type=button]#exec").attr("disabled", false);
   }
 
   function initTiles() {
     $("input[type=button]").attr("disabled", true);
-
-    staticMaps = new StaticMaps(map, TILE_WIDTH, TILE_HEIGHT, LOGO_HEIGHT);
-    staticMaps.setBounds(marker[1].getProjection(), latLngSW, latLngNE);
 
     var canvas = $("canvas#thumbnail")[0];
     var zoomW = staticMaps.canvas.width / canvas.width;
@@ -172,23 +183,21 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     }
     var context = canvas.getContext("2d");
     function updateProgress(i, N) {
-      $("div.progress").html("残り：" + i + "/" + N);
+      var progress = "残り：" + i + "/" + N;
+      $("div#progress").html(progress);
+      $("div#dialog2").dialog("option", "title", "実行中．．．" + progress);
       context.drawImage(staticMaps.canvas, 0, 0, staticMaps.canvas.width, staticMaps.canvas.height, 0, 0, canvas.width, canvas.height);
     }
     staticMaps.setProgressCallback(updateProgress);
     staticMaps.setFinishedCallback(saveTiles);
-
-    var tiles = staticMaps.ROWS + "個 × " + staticMaps.COLS + "個";
-    var size = staticMaps.MAP_WIDTH + "px × " + staticMaps.MAP_HEIGHT + "px";
-    size_info = "<ul><li>" + tiles + "</li><li>" + size + "</li></ul>";
-    $("div#dialog1").html(tiles + "の画像で作成します：" + size).dialog("open");
+    updateBounds(true);
   }
 
   function saveTiles() {
     $("div#dialog2").dialog("close");
     $("div#group3").addClass("selected");
 
-    $("canvas#thumbnail").attr("width", 0).attr("height", 0);
+    $("canvas#thumbnail").attr("width", THUMBNAIL_WIDTH).attr("height", THUMBNAIL_HEIGHT);
 
     var canvas = $("canvas#result")[0];
     var contentType = staticMaps.saveCanvas(canvas);
@@ -197,10 +206,10 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     if (staticMaps.useGateway) {
       var dataUrl = canvas.toDataURL(contentType);
       var html1 = '<a href="' + dataUrl + '" target="_blank">ダウンロード</a>';
-      $("div.progress").html(html1 + "&nbsp;" + html2);
+      $("div#progress").html(html1 + "&nbsp;" + html2);
     }
     else {
-      $("div.progress").html(html2);
+      $("div#progress").html(html2);
     }
 
   }
@@ -244,7 +253,6 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
       buttons: {
         "Ok": function() {
           $(this).dialog("close");
-          $("div#size").html(size_info);
           $("div#dialog2").dialog("open");
           setTimeout(staticMaps.loadNext, 1);
         },

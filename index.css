@@ -43,7 +43,7 @@ div.field {
   padding: 2px;
 }
 
-div.progress {
+div#progress {
   width: 100%;
 }
 
@@ -87,4 +87,5 @@ div#size ul {
 div#dialog2 div#content {
   margin: auto auto auto auto;
   text-align: center;
+  vertical-align: middle;
 }

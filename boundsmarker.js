@@ -1,45 +1,33 @@
-function BoundsMarker(map, latLng, id) {
-  this._latLng = latLng;
-  this._id = id;
+function BoundsMarker(map, latLng, target, draggingHandler, draggedHandler) {
+  this.latLng = latLng;
+  this.target = target;
   this.setMap(map);
+  var markerOptions = {
+    draggable: true,
+    map: map,
+    position: latLng,
+    visible: true
+  };
+  this.marker = new google.maps.Marker(markerOptions);
+  google.maps.event.addListener(this.marker, "drag", function() { draggingHandler(target); });
+  google.maps.event.addListener(this.marker, "dragend", draggedHandler);
 }
 BoundsMarker.prototype = new google.maps.OverlayView();
 
 BoundsMarker.prototype.draw = function() {
-  // 何度も呼ばれる可能性があるので、div_が未設定の場合のみ要素生成
-  if (!this._div) {
-    // 出力したい要素生成
-    this._div = document.createElement( "div" );
-    this._div.style.position = "absolute";
-    this._div.style.width = "8px";
-    this._div.style.height = "8px";
-    this._div.style.backgroundColor = "#FF0000";
-    this._div.id = this._id;
-    // 要素を追加する子を取得
-    var panes = this.getPanes();
-    // 要素追加
-    panes.overlayLayer.appendChild( this._div );
-  }
-  // 緯度、経度の情報を、Pixel（google.maps.Point）に変換
-  var point = this.getProjection().fromLatLngToDivPixel( this._latLng );
-
-  // 取得したPixel情報の座標に、要素の位置を設定
-  this._div.style.left = (point.x - 4) + 'px';
-  this._div.style.top = (point.y - 4) + 'px';
+  this.marker.setPosition(this.latLng);
 }
 
 /* 削除処理の実装 */
 BoundsMarker.prototype.remove = function() {
-  if (this._div) {
-    this._div.parentNode.removeChild(this._div);
-    this._div = null;
+  if (this.marker) {
+    this.marker.setVisible(false);
+    this.marker = null;
   }
 }
 
 /* 現在座標で位置を設定する。受け取った座標はfromLatLngToDivPixelでPixelに変換してDivのスタイルに設定。 */
 BoundsMarker.prototype.setPosition = function(latLng) {
-  this._latLng = latLng;
-  var point = this.getProjection().fromLatLngToDivPixel(latLng);
-  this._div.style.left = (point.x - 4) + 'px';
-  this._div.style.top = (point.y - 4) + 'px';
+  this.latLng = latLng;
+  this.draw();
 }
