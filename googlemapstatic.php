@@ -1,5 +1,5 @@
 <?php
-require_once 'HTTP.php';
+#require_once 'HTTP.php';
 
 $userAgents = array(
   // Chrome
@@ -28,13 +28,13 @@ $opts = array(
 $context = stream_context_create($opts);
 
 $waits = 1;
-for ($i = 0; !($handle = fopen($url, "rb", false, $context) && $i < 7; $i++) {
+for ($i = 0; !($handle = fopen($url, "rb", false, $context)) && $i < 7; $i++) {
   sleep($waits);
   $waits *= 2;
 }
 
 if (!$handle) {
-  HTTP::redirect("error.png");
+  #HTTP::redirect("error.png");
 }
 
 $contents = stream_get_contents($handle);
