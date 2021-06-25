@@ -69,7 +69,7 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
   </div>
 </div>
 
-<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false&language=ja"></script>
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?language=ja&key=AIzaSyD4UWzMCBt3E6NSIRMfcBMXiksCqwdfp2g"></script>
 <script type="text/javascript" src="sprintf.js"></script>
 <script type="text/javascript" src="boundsmarker.js"></script>
 <script type="text/javascript" src="staticmaps.js"></script>
@@ -205,16 +205,8 @@ HTML5のcanvasタグ対応のブラウザで参照してください。
     var canvas = $("canvas#result")[0];
     var contentType = staticMaps.saveCanvas(canvas);
 
-    var html2 = '<a href="javascript:viewTiles();">表示</a>';
-    if (staticMaps.useGateway) {
-      var dataUrl = canvas.toDataURL(contentType);
-      var html1 = '<a href="' + dataUrl + '" target="_blank">ダウンロード</a>';
-      $("div#progress").html(html1 + "&nbsp;" + html2);
-    }
-    else {
-      $("div#progress").html(html2);
-    }
-
+    var html = '<a href="javascript:viewTiles();">表示</a>';
+    $("div#progress").html(html);
   }
 
   function viewTiles() {

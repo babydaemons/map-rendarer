@@ -49,7 +49,7 @@ StaticMaps.prototype.setBounds = function(projection, latLngSW, latLngNE) {
   else {
     this.endpoint = "http://maps.google.com/maps/api/staticmap";
   }
-  this.params = [ "mobile=false", "sensor=false", "size=" + w + "x" + h ];
+  this.params = [ "mobile=false", "key=AIzaSyD4UWzMCBt3E6NSIRMfcBMXiksCqwdfp2g", "size=" + w + "x" + h ];
 
   var maps = this;
   this.loadNext = function() {
